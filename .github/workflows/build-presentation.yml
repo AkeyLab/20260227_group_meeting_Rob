@@ -5,6 +5,15 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,12 +24,19 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
-      - name: Export notebook to HTML
+      - name: Export notebook to static HTML
         run: |
           uvx marimo export html marimo_presentation.py \
             --no-include-code \
             --sandbox \
             -o presentation.html
+
+      - name: Export notebook to WASM HTML
+        run: |
+          uvx marimo export html-wasm marimo_presentation.py \
+            --no-show-code \
+            --sandbox \
+            -o _site
 
       - name: Install Playwright
         run: |
@@ -55,16 +71,33 @@ jobs:
           asyncio.run(main())
           PYEOF
 
-      - name: Upload HTML
+      - name: Upload HTML artifact
         uses: actions/upload-artifact@v4
         with:
           name: presentation-html
           path: presentation.html
           retention-days: 90
 
-      - name: Upload PDF
+      - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
         with:
           name: presentation-pdf
           path: presentation.pdf
           retention-days: 90
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
