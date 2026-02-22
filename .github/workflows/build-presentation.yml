@@ -1,0 +1,70 @@
+name: Build Presentation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Export notebook to HTML
+        run: |
+          uvx marimo export html marimo_presentation.py \
+            --no-include-code \
+            --sandbox \
+            -o presentation.html
+
+      - name: Install Playwright
+        run: |
+          uvx playwright install --with-deps chromium
+
+      - name: Convert HTML to PDF
+        run: |
+          uv run --with playwright python << 'PYEOF'
+          import asyncio
+          from pathlib import Path
+          from playwright.async_api import async_playwright
+
+          async def main():
+              html_path = Path("presentation.html").resolve()
+              async with async_playwright() as p:
+                  browser = await p.chromium.launch()
+                  page = await browser.new_page(
+                      viewport={"width": 1920, "height": 1080}
+                  )
+                  await page.goto(f"file://{html_path}", wait_until="networkidle")
+                  await page.wait_for_timeout(5000)
+                  await page.pdf(
+                      path="presentation.pdf",
+                      landscape=True,
+                      print_background=True,
+                      width="1920px",
+                      height="1080px",
+                  )
+                  await browser.close()
+                  print("PDF generated successfully")
+
+          asyncio.run(main())
+          PYEOF
+
+      - name: Upload HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: presentation-html
+          path: presentation.html
+          retention-days: 90
+
+      - name: Upload PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: presentation-pdf
+          path: presentation.pdf
+          retention-days: 90
