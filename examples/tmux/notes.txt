@@ -1,0 +1,30 @@
+* tmux is very likely installed on any linux computer you'll
+  ever run into
+
+* Use `tmux ls` to list current sessions
+
+* Start a tmux session here with `tmux new -t slow`
+  --> this creates a new session with a "tag" called slow
+
+* ls to find the `slow_process.sh` and cat to look at it
+
+* start the `slow_process.sh`
+
+* use "ctrl+b then d" to detach
+
+* re-attach with `tmux a -t slow` or just `tmux a`
+  since that was our last session
+
+* use "ctrl+b then %" to get a vertical split and
+  start another slow_process.sh
+
+* use "ctrl_b then left-arrow" to move to the left pane
+  and cancel the current run
+
+* Then jump back to the right and ctrl+c cancel the run
+
+* Close the panes and show the tmux session is also ended with
+  tmux ls
+
+* Unfortunately tmux sessions are lost during 
+  monthly della maintenance

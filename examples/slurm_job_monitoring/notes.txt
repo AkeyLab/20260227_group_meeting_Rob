@@ -1,0 +1,20 @@
+* vi the single-job and array-job sbatch files
+  to show the contents
+
+* Highlight the slurm_outs/ folder as a nice
+  way to organize the output log files
+
+* Maybe submit the jobs with sbatch or just look
+  at the current slurm outputs
+
+* Look at the prime_job.sbatch and the corresponding
+  find_prime_numbers.py
+  * Try running it on the login node with `python find_prime_numbers.py`
+  * Submit the job with `sbatch prime_job.sbatch`
+  * Once it starts, check usage with jobstats
+  * Use `scontrol show job $JOBID` to see more info
+    * scontrol only works for running jobs I believe
+
+* Check the time/memory usage with `seff`
+
+* Check the time/memory usage with `reportseff`

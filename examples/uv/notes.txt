@@ -1,0 +1,37 @@
+* uv manages python versions and python packages in a seamless way
+  * uv's goal is to allow a user to avoid `pip` and `venv`
+  * uv is NOT a direct replacement to conda
+    * can't manage R packages for example
+  * uv feels fast
+
+* uv is easy to install and is a stand-alone binary:
+  * https://docs.astral.sh/uv/getting-started/installation/
+
+* uvx allows you to run command line tools written in python
+  without having to worry about installing anything
+
+# Interactive uvx
+
+* try running `uvx --python 3.10 python`
+  * this starts a REPL with python 3.10
+
+* try running `uvx --python 3.11 python`
+  * this starts a REPL with python 3.11
+  * yes, uv is downloading/installing/managing python for you!
+
+* try running `uvx --with seaborn python`
+  * then `import seaborn as sns`
+  * then `df = sns.load_dataset('iris')`
+  * then `df.head()`
+
+* Can also specify python `uvx --with seaborn --python 3.9 python`
+
+* try running `uvx reportseff` to run Troy's reportseff
+  without having to manage the installation yourself!
+  * This works because reportseff is pip-installable
+
+# uv run scripts with self-contained dependencies
+
+* ???
+
+
