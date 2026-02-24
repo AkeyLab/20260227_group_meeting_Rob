@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -71,19 +71,13 @@ jobs:
           asyncio.run(main())
           PYEOF
 
-      - name: Upload HTML artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: presentation-html
-          path: presentation.html
-          retention-days: 90
-
-      - name: Upload PDF artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: presentation-pdf
-          path: presentation.pdf
-          retention-days: 90
+      - name: Commit PDF to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f presentation.pdf
+          git diff --staged --quiet && echo "No PDF changes to commit" || \
+            git commit -m "Update presentation PDF [skip ci]" && git push
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
