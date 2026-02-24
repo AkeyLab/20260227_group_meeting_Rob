@@ -31,12 +31,18 @@ jobs:
             --sandbox \
             -o presentation.html
 
-      - name: Export notebook to WASM HTML
+      - name: Export presentation to WASM HTML
         run: |
           uvx marimo export html-wasm marimo_presentation.py \
             --no-show-code \
             --sandbox \
             -o _site
+
+      - name: Export example notebook to WASM HTML
+        run: |
+          uvx marimo export html-wasm marimo_example.py \
+            --sandbox \
+            -o _site/example
 
       - name: Install Playwright
         run: |

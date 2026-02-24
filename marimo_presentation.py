@@ -18,6 +18,9 @@ app = marimo.App(
 def _():
     import marimo as mo
     import subprocess
+    from pathlib import Path
+
+    _sample_dir = Path("data")
     return mo, subprocess
 
 
@@ -101,19 +104,28 @@ def _(mo):
         mo.md("# Della cluster architecture"),
         mo.mermaid("""
         graph LR
+            subgraph Local
+                Laptop
+            end
+            
+            subgraph Login [Login / access nodes]
+                direction TB
+                della9["della9.princeton.edu"]
+                vis1["della-vis1.princeton.edu"]
+                mydella["https://mydella.princeton.edu"]
+                gpu["della-gpu.princeton.edu"]
+            end
+    
             subgraph Della [Della compute nodes]
                 N1[Node] & N2[Node] & N3[Node] & N4[...]
             end
 
+            Local -->|ssh | Login
+
             Della -->|fast 🐇| scratch["/scratch/gpfs"]
             Della --> home["/home"]
 
-            subgraph Login [Login / access nodes]
-                vis1["della-vis1.princeton.edu"]
-                mydella["https://mydella.princeton.edu"]
-                gpu["della-gpu.princeton.edu"]
-                della9["della9.princeton.edu"]
-            end
+
 
             Login -->|slow 🐢| projects["/projects"]
             Login --> tigerdata["/tigerdata"]
@@ -132,11 +144,14 @@ def _():
 def _(mo, subprocess):
     def get_list_of_logged_in_users():
         try:
-            result = subprocess.check_output(["who"])
-            lines = ["- "+r for r in result.decode().split("\n") if len(r) > 0]
-            return "\n".join(lines)
+            result = subprocess.check_output(["who"]).decode()
         except OSError:
-            return "*Not available in browser mode*"
+            sample = _sample_dir / "sample_who.txt"
+            result = sample.read_text() if sample.exists() else ""
+            lines = ["- " + r for r in result.strip().split("\n") if len(r) > 0]
+            return "*Sample data (actual command not runnable in browser mode):*\n\n" + "\n".join(lines) if lines else "*Not available in browser mode*"
+        lines = ["- " + r for r in result.strip().split("\n") if len(r) > 0]
+        return "\n".join(lines)
 
     users_button = mo.ui.button(
         label="Refresh logged-in users",
@@ -165,15 +180,8 @@ def _():
 
 @app.cell
 def _(mo, subprocess):
-    def get_top_processes():
-        try:
-            result = subprocess.check_output(
-                ["top", "-bn1", "-w", "200"], text=True
-            )
-        except OSError:
-            return "*Not available in browser mode*"
-        lines = result.strip().split("\n")
-        # Find the header line (starts with PID)
+    def _parse_top_output(text):
+        lines = text.strip().split("\n")
         header_idx = next(
             i for i, l in enumerate(lines) if l.strip().startswith("PID")
         )
@@ -182,6 +190,18 @@ def _(mo, subprocess):
         for line in lines[header_idx + 1 : header_idx + 21]:
             rows.append(line.split(None, len(header) - 1))
         return [dict(zip(header, row)) for row in rows if len(row) == len(header)]
+
+    def get_top_processes():
+        try:
+            result = subprocess.check_output(
+                ["top", "-bn1", "-w", "200"], text=True
+            )
+        except OSError:
+            sample = _sample_dir / "sample_top.txt"
+            if sample.exists():
+                return ("*Sample data (not available in browser mode):*", _parse_top_output(sample.read_text()))
+            return "*Not available in browser mode*"
+        return _parse_top_output(result)
 
     top_button = mo.ui.button(
         label="Refresh top",
@@ -196,7 +216,10 @@ def _(mo, top_button):
     # Top processes on the login node
     """)
 
-    if isinstance(top_button.value, list):
+    if isinstance(top_button.value, tuple):
+        warning, data = top_button.value
+        table = mo.vstack([mo.md(warning), mo.ui.table(data, selection=None)])
+    elif isinstance(top_button.value, list):
         table = mo.ui.table(top_button.value, selection=None)
     elif isinstance(top_button.value, str):
         table = mo.md(top_button.value)
@@ -222,7 +245,7 @@ def _(mo):
         Setting up SSH keys means no more typing your password every time.
         This also enables **VSCode Remote-SSH** to connect seamlessly.
 
-        There are a few keygen steps, but overall not very involved:
+        There are a few steps to follow, but I think it's worth setting up:
 
         ```bash
         # Generate a key pair (if you don't already have one)
@@ -240,7 +263,7 @@ def _(mo):
         After setup: `ssh della` just works — no password prompt.
         """),
         mo.md("""
-        **Full guide with all the details:**
+        **Full guide with all the details and other helpful suggestions:**
         [PrincetonUniversity/removing_tedium](https://github.com/PrincetonUniversity/removing_tedium)
         """),
     ])
@@ -259,38 +282,38 @@ def _(mo):
         mo.md("# Job and quota monitoring tools"),
         mo.accordion({
             "checkquota": mo.md("""
-Check your storage usage and quotas on `/home`, `/scratch`, and `/projects`:
-```bash
-checkquota
-```
-"""),
+    Check your storage usage and quotas on `/home`, `/scratch`, and `/projects`:
+    ```bash
+    checkquota
+    ```
+    """),
             "squeue / sacct": mo.md("""
-Monitor your running and recent jobs:
-```bash
-# Your currently running/pending jobs
-squeue -u $USER
+    Monitor your running and recent jobs:
+    ```bash
+    # Your currently running/pending jobs
+    squeue -u $USER
 
-# Historical job info (last 7 days)
-sacct -u $USER --starttime=$(date -d '7 days ago' +%Y-%m-%d) --format=JobID,JobName,State,Elapsed,MaxRSS
-```
-"""),
+    # Historical job info (last 7 days)
+    sacct -u $USER --starttime=$(date -d '7 days ago' +%Y-%m-%d) --format=JobID,JobName,State,Elapsed,MaxRSS
+    ```
+    """),
             "jobstats": mo.md("""
-Get detailed resource utilization for a completed job:
-```bash
-jobstats <job_id>
-```
-"""),
+    Get detailed resource utilization for a completed job:
+    ```bash
+    jobstats <job_id>
+    ```
+    """),
             "reportseff": mo.md("""
-A nicer way to see job efficiency — shows CPU, memory, and time efficiency at a glance:
-```bash
-# Install with uv
-uvx reportseff
+    A nicer way to see job efficiency — shows CPU, memory, and time efficiency at a glance:
+    ```bash
+    # Install with uv
+    uvx reportseff
 
-# Check your recent jobs
-reportseff -u $USER
-```
-[troycomi/reportseff](https://github.com/troycomi/reportseff)
-"""),
+    # Check your recent jobs
+    reportseff -u $USER
+    ```
+    [troycomi/reportseff](https://github.com/troycomi/reportseff)
+    """),
         }, multiple=True),
     ])
     return
@@ -311,6 +334,9 @@ def _(mo, subprocess):
             )
             return result.strip()
         except (OSError, subprocess.CalledProcessError):
+            sample = _sample_dir / "sample_tmux_sessions.txt"
+            if sample.exists():
+                return "*Sample data (not available in browser mode):*\n\n" + sample.read_text().strip()
             return "No tmux sessions running (or not available in browser mode)"
 
     tmux_button = mo.ui.button(
@@ -333,7 +359,6 @@ def _(mo, tmux_button):
         | New session | `tmux new -s name` |
         | Detach | `Ctrl+b` then `d` |
         | Reattach | `tmux attach -t name` |
-        | New window | `Ctrl+b` then `c` |
         | Split horizontal | `Ctrl+b` then `"` |
         | Split vertical | `Ctrl+b` then `%` |
         | Switch panes | `Ctrl+b` then arrow keys |
@@ -371,7 +396,7 @@ def _(mo, subprocess):
 
 
 @app.cell
-def _(mo, history_button):
+def _(history_button, mo):
     mo.vstack([
         mo.md("""
         # Ctrl+R — reverse history search
@@ -495,7 +520,7 @@ def _():
 @app.cell
 def _(mo):
     mermaid_source = '''```mermaid
-graph LR
+    graph LR
     subgraph Della [Della compute nodes]
         N1[Node] & N2[Node] & N3[Node] & N4[...]
     end
@@ -506,7 +531,7 @@ graph LR
         mydella["mydella"]
     end
     Login -->|slow| projects["/projects"]
-```'''
+    ```'''
 
     mo.vstack([
         mo.md("""
@@ -517,12 +542,12 @@ graph LR
         """),
         mo.hstack([
             mo.md(f"""
-**Source (in any .md file):**
+    **Source (in any .md file):**
 
-````
-{mermaid_source}
-````
-"""),
+    ````
+    {mermaid_source}
+    ````
+    """),
             mo.vstack([
                 mo.md("**Rendered by GitHub:**"),
                 mo.mermaid("""
