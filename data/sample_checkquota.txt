@@ -1,0 +1,11 @@
+                       Storage/size quota filesystem report for user: rbierman
+Filesystem    Mount                                      Used  Limit  MaxLim Comment
+della_home    /home/rbierman                            38.9G  46.5G   50.0G
+della_scratch /scratch/gpfs/AKEY/rbierman               93.5G  20.0T   20.0T
+projects      /projects/AKEY/akey_vol2                  12.0T  30.0T   30.0T
+
+                        Number of files quota report for user: rbierman
+Filesystem    Mount                                      Used  Limit  MaxLim Comment
+della_home    /home/rbierman                            29.8K   1.9M    2.0M
+della_scratch /scratch/gpfs/AKEY/rbierman              125.3K     --      --
+projects      /projects/AKEY/akey_vol2                   1.2M     --      --

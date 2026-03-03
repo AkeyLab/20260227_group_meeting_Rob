@@ -25,39 +25,15 @@ def _():
 
 
 @app.cell
-def _():
-    # Slide 1: Title slide
-    return
-
-
-@app.cell
 def _(mo):
-    rocket_slider = mo.ui.slider(steps=[1, 2, 3, 4, 5])
-    return (rocket_slider,)
+    mo.md(f"""
+    # Akey Group Meeting February 27th 2026
 
-
-@app.cell
-def _(mo, rocket_slider):
-    rocket = mo.icon("lucide:rocket", size=20)
-    rockets = [rocket]*rocket_slider.value
-
-    slider_md = mo.md(f"""
-    # Linux tips and tricks. And AI
-
-    February 27th 2026, Rob
-
-    {rocket_slider}
+    * Della
+    * "New-to-me" tools
+    * linux tips
+    * AI
     """)
-
-    rockets_md = mo.hstack(rockets, justify="start")
-
-    mo.vstack([slider_md, rockets_md])
-    return
-
-
-@app.cell
-def _():
-    # Slide 2: Outline
     return
 
 
@@ -71,6 +47,10 @@ def _(mo):
         tools/techniques but not go into depth on any one of them.
         """),
         mo.accordion({
+            "marimo notebooks": mo.md("""
+    - Alternatives to python jupyter notebooks
+    - This presentation is a marimo notebook
+    """),
             "Della": mo.md("""
     - Mental model of how the Della cluster is organized
     - Ssh into della without a password
@@ -93,21 +73,31 @@ def _(mo):
 
 
 @app.cell
-def _():
-    # Slide 3: Della architecture
+def _(mo):
+    # CLAUDE TODO: Make this a slide that is a "section header". It would be nice if the text was in the middle of the slide
+    mo.md("""
+    #Della
+    """)
     return
 
 
 @app.cell
 def _(mo):
     mo.vstack([
-        mo.md("# Della cluster architecture"),
+        mo.md("# Della cluster architecture overview"),
         mo.mermaid("""
-        graph LR
+        graph TD
             subgraph Local
                 Laptop
             end
-            
+
+            subgraph FileSystems
+                projects["/projects"]
+                tigerdata["/tigerdata"]
+                scratch["/scratch/gpfs"]
+                home["/home"]
+            end
+
             subgraph Login [Login / access nodes]
                 direction TB
                 della9["della9.princeton.edu"]
@@ -115,28 +105,84 @@ def _(mo):
                 mydella["https://mydella.princeton.edu"]
                 gpu["della-gpu.princeton.edu"]
             end
-    
-            subgraph Della [Della compute nodes]
+
+            subgraph Compute [Della compute nodes]
                 N1[Node] & N2[Node] & N3[Node] & N4[...]
             end
 
-            Local -->|ssh | Login
+            Local -->|ssh/web-browser | Login
+            Login -->|sbatch | Compute
 
-            Della -->|fast 🐇| scratch["/scratch/gpfs"]
-            Della --> home["/home"]
-
-
-
-            Login -->|slow 🐢| projects["/projects"]
-            Login --> tigerdata["/tigerdata"]
+            Login --> FileSystems
+            Compute --> FileSystems
         """),
     ])
     return
 
 
 @app.cell
-def _():
-    # Slide 4: Other users on the shared node
+def _(mo):
+    rocket_slider = mo.ui.slider(steps=[1, 2, 3, 4, 5])
+    return
+
+
+@app.cell
+def _(mo):
+    # CLAUDE TODO: use an accordion layout here
+    mo.md("""
+    # Overview of important notes about Della organization
+
+    ## Terminology
+    - A "node" is a computer and has multiple CPUs (or cores)
+    - A "filesystem" is "mounted" onto each node to allow consistent file access
+    - "SLURM" is the "scheduler" on Della and you ask it to schedule your jobs
+
+    ## Login nodes
+    - When you are interactively working with della you're likely on a "login node"
+    - Login nodes have internet access
+    - You're one of many users sharing the login node
+    - Programs requiring lots of time, memory, or compute should not be run on the login node
+
+    ## File systems
+    - On our personal laptops the compute resources are 1:1 tied to the storage resources
+    - However on Della the same filesystems are mounted to all login and compute nodes
+    - Kind of like accessing the same google document on different computers
+
+    ## Compute nodes
+    - Most of the nodes (99%) composing Della are compute nodes
+    - You cannot directly access compute nodes, instead you petition the SLURM scheduler to run a job for you
+    - Compute nodes do NOT have internet access
+    - This means you can't submit a job that tries to download data or packages from the internet
+
+    ## Vis nodes
+    - These are two special login nodes that aren't hidden behind the scheduler
+    - They are powerful shared computers and it's a "free for all" like the "wild west"
+    - They DO have internet access
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.vstack([
+        mo.md("""
+        # SSH into Della without a password
+
+        **Presentor Note:** Show `della` alias and VScode remote access
+
+
+        Setting up SSH keys means no more typing your password every time.
+        This also enables **VSCode Remote-SSH** to connect seamlessly.
+
+        There are a few steps to follow, but it only needs to be setup once.
+
+        After setup: `ssh della` just works — no password prompt.
+        """),
+        mo.md("""
+        **Full guide with all the details and other helpful suggestions:**
+        https://github.com/PrincetonUniversity/removing_tedium
+        """),
+    ])
     return
 
 
@@ -154,32 +200,10 @@ def _(mo, subprocess):
         return "\n".join(lines)
 
     users_button = mo.ui.button(
-        label="Refresh logged-in users",
+        label="Run `who`",
         on_click=lambda value: get_list_of_logged_in_users(),
     )
-    return (users_button,)
 
-
-@app.cell
-def _(mo, users_button):
-    header = mo.md("""
-    # On the Della login node you're sharing with other users
-    """)
-
-    users_md = mo.md(users_button.value) if users_button.value else mo.md("")
-
-    mo.vstack([header, users_button, users_md])
-    return
-
-
-@app.cell
-def _():
-    # Slide 5: Top processes
-    return
-
-
-@app.cell
-def _(mo, subprocess):
     def _parse_top_output(text):
         lines = text.strip().split("\n")
         header_idx = next(
@@ -204,18 +228,15 @@ def _(mo, subprocess):
         return _parse_top_output(result)
 
     top_button = mo.ui.button(
-        label="Refresh top",
+        label="Run `top`",
         on_click=lambda value: get_top_processes(),
     )
-    return (top_button,)
+    return top_button, users_button
 
 
 @app.cell
-def _(mo, top_button):
-    top_header = mo.md("""
-    # Top processes on the login node
-    """)
-
+def _(mo, top_button, users_button):
+    users_md = mo.md(users_button.value) if users_button.value else mo.md("")
     if isinstance(top_button.value, tuple):
         warning, data = top_button.value
         table = mo.vstack([mo.md(warning), mo.ui.table(data, selection=None)])
@@ -226,53 +247,89 @@ def _(mo, top_button):
     else:
         table = mo.md("")
 
-    mo.vstack([top_header, top_button, table])
-    return
-
-
-@app.cell
-def _():
-    # Slide 6: SSH without a password
-    return
-
-
-@app.cell
-def _(mo):
     mo.vstack([
-        mo.md("""
-        # SSH into Della without a password
-
-        Setting up SSH keys means no more typing your password every time.
-        This also enables **VSCode Remote-SSH** to connect seamlessly.
-
-        There are a few steps to follow, but I think it's worth setting up:
-
-        ```bash
-        # Generate a key pair (if you don't already have one)
-        ssh-keygen -t ed25519
-
-        # Copy your public key to Della
-        ssh-copy-id netid@della.princeton.edu
-
-        # Add a shortcut to ~/.ssh/config
-        Host della
-            HostName della.princeton.edu
-            User netid
-        ```
-
-        After setup: `ssh della` just works — no password prompt.
-        """),
-        mo.md("""
-        **Full guide with all the details and other helpful suggestions:**
-        [PrincetonUniversity/removing_tedium](https://github.com/PrincetonUniversity/removing_tedium)
-        """),
+        mo.md("# Now that you're on the login node"), 
+        mo.md("## On the Della login node you're sharing with other users"), 
+        users_button,
+        users_md,
+        mo.md("## Top processes on the login node"),
+        top_button,
+        table,
     ])
     return
 
 
 @app.cell
-def _():
-    # Slide 7: Job and quota monitoring
+def _(mo, subprocess):
+    def run_checkquota():    
+        try:
+            result = subprocess.check_output(["checkquota"], text=True)
+            #CLAUDE TODO: please parse the "checkquota Storage/size quota filesystem" table to display nicely
+            #CLAUDE TODO: also please parse the "number of files" as a separate table
+        except OSError:
+            #CLAUDE TODO: store checkquota results in data to allow some example output when run in the browser
+            pass
+
+        return result
+
+    checkquota_button = mo.ui.button(
+        label="`checkquota`",
+        on_click=lambda value: run_checkquota(),
+    )
+
+    def write_large_file():
+        #CLAUDE TODO: use `yes` command or similar piped to head to write a large file
+        #CLAUDE TODO: and time how long it takes and report the timing
+        projects_f_path = "/projects/AKEY/akey_vol2/rbierman/large_file.txt"
+        scratch_f_path = "/scratch/gpfs/AKEY/rbierman/large_file.txt"
+
+        #projects_timing = subprocess.check_output("time yes | head -n 200000 > projects_f_path")
+
+        #result = f"Time to write to projects {projects_timing} \nTime to write to scratch {scratch_timing}"
+        #return result
+
+    write_to_projects_button = mo.ui.button(
+        label="Write to projects",
+        on_click=lambda value: write_large_file(),
+    )
+    return checkquota_button, write_to_projects_button
+
+
+@app.cell
+def _(checkquota_button, mo, write_to_projects_button):
+    mo.md(f"""
+    # Filesystems on Della
+
+    * /home is your personal directory and has ~50GB limit
+    * /scratch is fast parallel storage that is not backed up
+    * /projects is backed up but slower
+    * /tigerdata is cold storage backup for infrequently accessed data
+
+    {checkquota_button}
+    {checkquota_button.value}
+
+    {write_to_projects_button}
+    {write_to_projects_button.value}
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    # CLAUDE TODO: Follow the link and add more rows to the nodes_info_table
+    nodes_info_table = mo.md("""
+    Processor	| Nodes |	Cores per Node |	CPU Memory per Node
+    ---         |       | ---              |
+    2.4 GHz AMD EPYC 9654 |	55	| 192	| 1500 GB	
+    2.8 GHz Intel Cascade Lake |	64 |	32 |	190 GB
+    """)
+
+    mo.vstack([
+        mo.md("# Della compute nodes have lots of resources"),
+        nodes_info_table,
+        mo.md("If you submit a job asking for 16G of RAM and 1 CPU then you'll get part of a node."),
+        mo.md("Not always up to date: https://researchcomputing.princeton.edu/systems/della")
+    ])
     return
 
 
@@ -320,12 +377,6 @@ def _(mo):
 
 
 @app.cell
-def _():
-    # Slide 8: tmux
-    return
-
-
-@app.cell
 def _(mo, subprocess):
     def get_tmux_sessions():
         try:
@@ -352,6 +403,8 @@ def _(mo, tmux_button):
         mo.md("""
         # tmux — persistent terminal sessions
 
+        **Presentor note:** Work through example/tmux
+
         Your SSH session dies if your connection drops. tmux keeps your work alive.
 
         | Action | Shortcut |
@@ -367,12 +420,6 @@ def _(mo, tmux_button):
         tmux_button,
         mo.md(f"```\n{tmux_button.value}\n```") if isinstance(tmux_button.value, str) and tmux_button.value else mo.md(""),
     ])
-    return
-
-
-@app.cell
-def _():
-    # Slide 9: Ctrl+R history search
     return
 
 
@@ -418,12 +465,6 @@ def _(history_button, mo):
         history_button,
         mo.md(f"```\n{history_button.value}\n```") if isinstance(history_button.value, str) and history_button.value else mo.md(""),
     ])
-    return
-
-
-@app.cell
-def _():
-    # Slide 10: uv
     return
 
 
@@ -512,26 +553,14 @@ def _(mo):
 
 
 @app.cell
-def _():
-    # Slide 12: Mermaid diagrams
-    return
-
-
-@app.cell
 def _(mo):
-    mermaid_source = '''```mermaid
-    graph LR
-    subgraph Della [Della compute nodes]
-        N1[Node] & N2[Node] & N3[Node] & N4[...]
-    end
-    Della -->|fast| scratch["/scratch/gpfs"]
-    Della --> home["/home"]
-    subgraph Login [Login / access nodes]
-        vis1["della-vis1"]
-        mydella["mydella"]
-    end
-    Login -->|slow| projects["/projects"]
-    ```'''
+    mermaid_source = '''
+    graph TD
+        Yeast -->|Sequencing| DNA
+        Yeast -->|Experiment| Growth-Kinetics
+        DNA --> Analysis
+        Growth-Kinetics --> Analysis
+    '''
 
     mo.vstack([
         mo.md("""
@@ -542,36 +571,21 @@ def _(mo):
         """),
         mo.hstack([
             mo.md(f"""
-    **Source (in any .md file):**
+    **Source (in any .md file like README.md):**
 
     ````
+    ```mermaid
     {mermaid_source}
+    ```
     ````
     """),
             mo.vstack([
-                mo.md("**Rendered by GitHub:**"),
-                mo.mermaid("""
-                graph LR
-                    subgraph Della [Della compute nodes]
-                        N1[Node] & N2[Node] & N3[Node] & N4[...]
-                    end
-                    Della -->|fast| scratch["/scratch/gpfs"]
-                    Della --> home["/home"]
-                    subgraph Login [Login / access nodes]
-                        vis1["della-vis1"]
-                        mydella["mydella"]
-                    end
-                    Login -->|slow| projects["/projects"]
-                """),
+                mo.md("**Rendered by GitHub and other tools:**"),
+                mo.mermaid(f"""{mermaid_source}"""),
             ]),
         ], widths=[1, 1]),
+        mo.md("Lots of different diagrams/plots with examples: https://mermaid.js.org/intro/")
     ])
-    return
-
-
-@app.cell
-def _():
-    # Slide 13: GitHub Actions
     return
 
 

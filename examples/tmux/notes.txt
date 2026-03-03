@@ -27,4 +27,4 @@
   tmux ls
 
 * Unfortunately tmux sessions are lost during 
-  monthly della maintenance
+  monthly della maintenance.
