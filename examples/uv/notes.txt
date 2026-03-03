@@ -1,8 +1,10 @@
+# Overview and installation
+
 * uv manages python versions and python packages in a seamless way
   * uv's goal is to allow a user to avoid `pip` and `venv`
   * uv is NOT a direct replacement to conda
     * can't manage R packages for example
-  * uv feels fast
+  * uv is FAST
 
 * uv is easy to install and is a stand-alone binary:
   * https://docs.astral.sh/uv/getting-started/installation/
@@ -32,6 +34,30 @@
 
 # uv run scripts with self-contained dependencies
 
-* ???
+* try `uv init --script simulation_script.py` to create
+  a "bare-bones" python script with a special header.
+  Note that his header is not specific to UV, python
+  officially recognizes it: https://peps.python.org/pep-0723/
 
+* next try `uv add msprime --script simulation_script.py`. When
+  you look at the file it should now have msprime in the header
+  listed as a dependency
+
+* next I'll add an `import msprime` into the script.
+
+* For me, when I do `python simulation_script.py` I get a
+  ModuleNotFoundError because msprime is not installed
+
+* But if I do `uv run simulation_script.py` it installs
+  msprime (and its dependencies) and successfully runs the script
+
+# Important notes about uv and internet access
+
+* uv downloads and installs things for you, so it needs
+  internet access. This can cause problems if you run a job
+  with uv since jobs running on a compute node don't have internet
+
+* The current workaround is to first do `uv sync --script myscript.py` on
+  the login node, which handles all the downloads and installation so that
+  you can then run a job with `uv run --offline myscript.py`
 

@@ -29,10 +29,17 @@ def _(mo):
     mo.md(f"""
     # Akey Group Meeting February 27th 2026
 
+    Topics
+
+    * Command line tools (tmux, ctrl+R, aliases, tree, pipe to vi)
     * Della
-    * "New-to-me" tools
-    * linux tips
-    * AI
+    * Shiny "new" software tools (marimo, uv)
+    * Claude code AI in the terminal
+    * Github
+
+    This presentation is available on [github](https://github.com/AkeyLab/20260227_group_meeting_Rob/tree/main)
+
+    **Note to Rob:** Record this presentation in zoom
     """)
     return
 
@@ -45,11 +52,12 @@ def _(mo):
 
         Goal of this presentation is to hopefully introduce many new
         tools/techniques but not go into depth on any one of them.
+
+        Feel free to follow along and interrupt whenever
         """),
         mo.accordion({
-            "marimo notebooks": mo.md("""
-    - Alternatives to python jupyter notebooks
-    - This presentation is a marimo notebook
+            "Command line tools": mo.md("""
+    - tmux, ctrl+R tips and tricks
     """),
             "Della": mo.md("""
     - Mental model of how the Della cluster is organized
@@ -57,10 +65,12 @@ def _(mo):
     - Vscode remotely into della without a password
     - Job and quota monitoring tools
     """),
-            "General command line": mo.md("""
-    - tmux, ctrl+R tips and tricks
-    - uv python runtime and dependency manager
-    - claude code AI in the terminal
+            "Shiny new tools": mo.md("""
+    - Marimo notebooks as alternatives to python jupyter notebooks
+    - uv python version and package manager
+    """),
+            "Claude code": mo.md("""
+    - Interacting with an LLM directly on Della
     """),
             "Github": mo.md("""
     - Mermaid-js diagrams
@@ -74,10 +84,20 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    # CLAUDE TODO: Make this a slide that is a "section header". It would be nice if the text was in the middle of the slide
-    mo.md("""
-    #Della
-    """)
+    mo.center(
+        mo.vstack([
+            mo.md("# Command line tools"),
+            mo.md("(switch to terminal for interactive portion and cd into examples/tmux )"),
+        ])
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.center(
+        mo.md("# Della")
+    )
     return
 
 
@@ -128,37 +148,38 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    # CLAUDE TODO: use an accordion layout here
-    mo.md("""
-    # Overview of important notes about Della organization
-
-    ## Terminology
+    mo.vstack([
+        mo.md("# Overview of important notes about Della organization"),
+        mo.accordion({
+            "Terminology": mo.md("""
     - A "node" is a computer and has multiple CPUs (or cores)
     - A "filesystem" is "mounted" onto each node to allow consistent file access
     - "SLURM" is the "scheduler" on Della and you ask it to schedule your jobs
-
-    ## Login nodes
+    """),
+            "Login nodes": mo.md("""
     - When you are interactively working with della you're likely on a "login node"
     - Login nodes have internet access
     - You're one of many users sharing the login node
     - Programs requiring lots of time, memory, or compute should not be run on the login node
-
-    ## File systems
+    """),
+            "File systems": mo.md("""
     - On our personal laptops the compute resources are 1:1 tied to the storage resources
     - However on Della the same filesystems are mounted to all login and compute nodes
     - Kind of like accessing the same google document on different computers
-
-    ## Compute nodes
+    """),
+            "Compute nodes": mo.md("""
     - Most of the nodes (99%) composing Della are compute nodes
     - You cannot directly access compute nodes, instead you petition the SLURM scheduler to run a job for you
     - Compute nodes do NOT have internet access
     - This means you can't submit a job that tries to download data or packages from the internet
-
-    ## Vis nodes
+    """),
+            "Vis nodes": mo.md("""
     - These are two special login nodes that aren't hidden behind the scheduler
     - They are powerful shared computers and it's a "free for all" like the "wild west"
     - They DO have internet access
-    """)
+    """),
+        }, multiple=True),
+    ])
     return
 
 
@@ -261,16 +282,51 @@ def _(mo, top_button, users_button):
 
 @app.cell
 def _(mo, subprocess):
-    def run_checkquota():    
+    import re
+    import time
+
+    def _parse_checkquota(text):
+        """Parse checkquota output into storage and files tables."""
+        storage_rows = []
+        files_rows = []
+        current = None
+        headers = None
+        for line in text.strip().split("\n"):
+            stripped = line.strip()
+            if "Storage/size" in stripped:
+                current = "storage"
+                continue
+            elif "Number of files" in stripped:
+                current = "files"
+                continue
+            if not stripped or stripped.startswith("--"):
+                continue
+            if stripped.startswith("Filesystem"):
+                headers = re.split(r"\s{2,}", stripped)
+                continue
+            if headers and current:
+                parts = re.split(r"\s{2,}", stripped)
+                if len(parts) >= 3:
+                    row = dict(zip(headers, parts))
+                    if current == "storage":
+                        storage_rows.append(row)
+                    else:
+                        files_rows.append(row)
+        return storage_rows, files_rows
+
+    def run_checkquota():
+        sample_prefix = ""
         try:
             result = subprocess.check_output(["checkquota"], text=True)
-            #CLAUDE TODO: please parse the "checkquota Storage/size quota filesystem" table to display nicely
-            #CLAUDE TODO: also please parse the "number of files" as a separate table
         except OSError:
-            #CLAUDE TODO: store checkquota results in data to allow some example output when run in the browser
-            pass
-
-        return result
+            sample = _sample_dir / "sample_checkquota.txt"
+            if sample.exists():
+                result = sample.read_text()
+                sample_prefix = "*Sample data (not available in browser mode):*"
+            else:
+                return (None, None, "*Not available in browser mode*")
+        storage, files = _parse_checkquota(result)
+        return (storage, files, sample_prefix)
 
     checkquota_button = mo.ui.button(
         label="`checkquota`",
@@ -278,18 +334,33 @@ def _(mo, subprocess):
     )
 
     def write_large_file():
-        #CLAUDE TODO: use `yes` command or similar piped to head to write a large file
-        #CLAUDE TODO: and time how long it takes and report the timing
         projects_f_path = "/projects/AKEY/akey_vol2/rbierman/large_file.txt"
         scratch_f_path = "/scratch/gpfs/AKEY/rbierman/large_file.txt"
+        n_lines = 200_000_000
+        cmd = f"yes | head -n {n_lines}"
 
-        #projects_timing = subprocess.check_output("time yes | head -n 200000 > projects_f_path")
+        try:
+            start = time.time()
+            subprocess.run(f"{cmd} > {projects_f_path}", shell=True, check=True)
+            projects_time = time.time() - start
 
-        #result = f"Time to write to projects {projects_timing} \nTime to write to scratch {scratch_timing}"
-        #return result
+            start = time.time()
+            subprocess.run(f"{cmd} > {scratch_f_path}", shell=True, check=True)
+            scratch_time = time.time() - start
+
+            # Clean up
+            subprocess.run(f"rm -f {projects_f_path} {scratch_f_path}", shell=True)
+
+            return (
+                f"Writing {n_lines:,} lines:\n\n"
+                f"- `/projects`: {projects_time:.2f}s\n"
+                f"- `/scratch`:  {scratch_time:.2f}s"
+            )
+        except (OSError, subprocess.CalledProcessError) as e:
+            return f"*Not available in browser mode:* {e}"
 
     write_to_projects_button = mo.ui.button(
-        label="Write to projects",
+        label="Write large file (projects vs scratch)",
         on_click=lambda value: write_large_file(),
     )
     return checkquota_button, write_to_projects_button
@@ -297,32 +368,60 @@ def _(mo, subprocess):
 
 @app.cell
 def _(checkquota_button, mo, write_to_projects_button):
-    mo.md(f"""
-    # Filesystems on Della
+    _quota_elements = []
+    if isinstance(checkquota_button.value, tuple):
+        storage, files, prefix = checkquota_button.value
+        if prefix:
+            _quota_elements.append(mo.md(prefix))
+        if storage:
+            _quota_elements.append(mo.md("### Storage/size quota"))
+            _quota_elements.append(mo.ui.table(storage, selection=None))
+        if files:
+            _quota_elements.append(mo.md("### Number of files quota"))
+            _quota_elements.append(mo.ui.table(files, selection=None))
+        if not storage and not files and not prefix:
+            _quota_elements.append(mo.md("*No quota data available*"))
+    elif isinstance(checkquota_button.value, str):
+        _quota_elements.append(mo.md(checkquota_button.value))
 
-    * /home is your personal directory and has ~50GB limit
-    * /scratch is fast parallel storage that is not backed up
-    * /projects is backed up but slower
-    * /tigerdata is cold storage backup for infrequently accessed data
+    _write_result = mo.md("")
+    if isinstance(write_to_projects_button.value, str):
+        _write_result = mo.md(write_to_projects_button.value)
 
-    {checkquota_button}
-    {checkquota_button.value}
+    mo.vstack([
+        mo.md("""
+        # Filesystems on Della
 
-    {write_to_projects_button}
-    {write_to_projects_button.value}
-    """)
+        * `/home` is your personal directory and has ~50GB limit
+        * `/scratch` is fast parallel storage that is not backed up
+        * `/projects` is backed up but slower
+        * `/tigerdata` is cold storage backup for infrequently accessed data
+        """),
+        checkquota_button,
+        *_quota_elements,
+        write_to_projects_button,
+        _write_result,
+    ])
     return
 
 
 @app.cell
 def _(mo):
-    # CLAUDE TODO: Follow the link and add more rows to the nodes_info_table
-    nodes_info_table = mo.md("""
-    Processor	| Nodes |	Cores per Node |	CPU Memory per Node
-    ---         |       | ---              |
-    2.4 GHz AMD EPYC 9654 |	55	| 192	| 1500 GB	
-    2.8 GHz Intel Cascade Lake |	64 |	32 |	190 GB
-    """)
+    nodes_info_table = mo.ui.table(
+        [
+            {"Processor": "2.4 GHz AMD EPYC 9654", "Nodes": 55, "Cores/Node": 192, "Memory/Node": "1500 GB", "GPUs/Node": "N/A"},
+            {"Processor": "2.8 GHz Intel Cascade Lake", "Nodes": 64, "Cores/Node": 32, "Memory/Node": "190 GB", "GPUs/Node": "N/A"},
+            {"Processor": "3.1 GHz Intel Cascade Lake", "Nodes": 24, "Cores/Node": 40, "Memory/Node": "380 GB", "GPUs/Node": "N/A"},
+            {"Processor": "2.6 GHz AMD EPYC Rome", "Nodes": 20, "Cores/Node": 128, "Memory/Node": "768 GB", "GPUs/Node": "2 (A100)"},
+            {"Processor": "2.8 GHz Intel Ice Lake", "Nodes": 59, "Cores/Node": 48, "Memory/Node": "1000 GB", "GPUs/Node": "4 (A100)"},
+            {"Processor": "2.8 GHz Intel Ice Lake", "Nodes": 10, "Cores/Node": 48, "Memory/Node": "1000 GB", "GPUs/Node": "8 (MIG A100)"},
+            {"Processor": "2.8 GHz Intel Ice Lake", "Nodes": 2, "Cores/Node": 48, "Memory/Node": "1000 GB", "GPUs/Node": "28 (MIG A100)"},
+            {"Processor": "2.8 ARM Neoverse-V2", "Nodes": 1, "Cores/Node": 72, "Memory/Node": "575 GB", "GPUs/Node": "1 (GH200)"},
+            {"Processor": "2.1 GHz Intel Sapphire Rapids", "Nodes": 42, "Cores/Node": 96, "Memory/Node": "1000 GB", "GPUs/Node": "8 (H100)"},
+            {"Processor": "2.5 GHz Intel Emerald Rapids", "Nodes": 18, "Cores/Node": 64, "Memory/Node": "1500 GB", "GPUs/Node": "8 (H200)"},
+        ],
+        selection=None,
+    )
 
     mo.vstack([
         mo.md("# Della compute nodes have lots of resources"),

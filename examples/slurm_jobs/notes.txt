@@ -1,0 +1,65 @@
+* vi the single-job and array-job sbatch files
+  to show the contents
+
+* Highlight the slurm_outs/ folder as a nice
+  way to organize the output log files
+
+* Maybe submit the jobs with sbatch or just look
+  at the current slurm outputs
+
+* Look at the prime_job.sbatch and the corresponding
+  find_prime_numbers.py
+  * Try running it on the login node with `python find_prime_numbers.py`
+  * Submit the job with `sbatch prime_job.sbatch`
+  * Once it starts, check usage with `jobstats`
+  * Use `scontrol show job $JOBID` to see more info
+    * scontrol only works for running jobs
+    * use sacct for finished jobs
+
+* Check the time/memory usage with `seff`
+
+* Check the time/memory usage with `reportseff`
+
+
+* Check the QOS (quality of service?) for the different queues with `qos | head -n 30`
+  below is an example output.
+
+  Your job submission will get assigned to a queue based on the requested time and whether
+  or not you ask for a GPU. Also if you are part of a special group on campus like PLI.
+
+  Here's what queue your job will end up in based on time if you don't need a GPU:
+      test   - 61 minutes or less (no GPU)
+      short  - Between 61 and 24 hours
+      medium - Between 24 and 72 hours
+      vlong  - Between 72 and 144 hours (6 days)
+
+  And here are the limits for the different queues. Note how you can only have two jobs
+  in the test queue!
+
+                    Name   Priority       GrpTRES  GrpCPUs MaxCPUsPU MaxJobsPU MaxNodesPU MaxSubmit            MaxTRESPU     MaxTRESPA 
+    -------------------- ---------- ------------- -------- --------- --------- ---------- --------- -------------------- ------------- 
+                   vlong       1200      cpu=1400     1400       325        60                 2000              cpu=325               
+                  medium       3000      cpu=3200     3200       400       200                 2000              cpu=400               
+                   short       5000                             1400       400                 2201             cpu=1400               
+                    test      10000                                          2                  200                                    
+               gpu-short       5000                                         44                 1100          gres/gpu=44               
+              gpu-medium       2000  gres/gpu=160                           24         24      1100  gres/gpu=20,node=24               
+                gpu-long       1000                                         10         16       100  gres/gpu=16,node=16               
+                gpu-test       8000                                          3                   25                                    
+                disabled          0         cpu=1        1                                                                             
+                 enabled          0                             1400                                            cpu=1400               
+             della-donia          0                                        100                                                         
+            della-cryoem       5000                              400        16                 2000  cpu=400,gres/gpu=32               
+             della-gpuee          0                                                                                                    
+             della-malik          0                                                                                                    
+               pli-short       5000                                                    10            gres/gpu=64,node=10               
+              pli-medium       3000  gres/gpu=176                                       8             gres/gpu=32,node=8               
+                pli-long          0    gres/gpu=8                                                             gres/gpu=8               
+                pli-high      10000  gres/gpu=208                                                            gres/gpu=64   gres/gpu=64 
+                 pli-low          0   gres/gpu=88                                                            gres/gpu=16               
+          della-shakemov      20000                                          2                                                         
+                     mig          0                                         14                                                         
+                  pli-cp       8000                                                                           gres/gpu=8               
+                  pli-lc        500   gres/gpu=30                                      16            gres/gpu=16,node=16               
+                   ailab          0                                                                          gres/gpu=16               
+

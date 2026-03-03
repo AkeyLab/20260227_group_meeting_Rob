@@ -1,0 +1,42 @@
+# This is just a haphazard collection of bash terminal tools I find helpful
+
+* tmux 
+  --> Has it's own separate section, but just wanted to list it again
+
+* cd -
+  --> go back to the prior directory
+
+* ctrl+a and ctrl+e 
+  --> move to the start or end of the command you're typing
+
+* ctrl+r
+  --> Search through your history for prior commands
+  --> Can be much faster than using arrow-up and arrow-down
+  --> try `ctrl+r` then start typing "sbatch"
+
+* aliases in your ~/.bashrc
+  --> Allows you to have a shortened version of commonly used commands
+  --> Your ~/.bashrc gets sourced when you login
+  --> For example I have `qstat` as a shortcut for `squeue` with many options:
+        `alias qstat='squeue -u $USER -o "%.18i %.9P %.8j %.8u %.2t %.10M %.10m %.10l %.6D %.4C %R"'`
+
+  --> I also have `alias prj="cd /projects/AKEY/akey_vol2/rbierman"`
+
+* Piping output to `less` or `vi`
+  --> If you have a good deal of output from running an interactive command
+  --> For example `checkquota | less`
+  --> I like vim so I often do `checkquota | vi -`
+
+* tree
+  --> See a graphical folder structure of subdirs of the current directory
+  --> Can limit how deeply the tree goes like `tree -L 2 | less`
+  --> Can be a slow command if there are many files
+
+* !
+  --> Runs the last command starting with the letters typed
+  --> like `!echo` will run your last echo command
+  --> A slight shortcut to `ctrl+r`
+
+* realpath
+  --> Get the full path to a file
+  --> For example `realpath notes.txt`

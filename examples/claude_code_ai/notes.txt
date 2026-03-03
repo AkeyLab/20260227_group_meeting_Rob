@@ -1,0 +1,26 @@
+# My experience with Claude Code
+
+* Claude Code seems good, but I'm still figuring out how and when to use it
+  --> I mostly use it for small tasks to save typing/googling
+  --> I've used it to make a website which would have taken me months to make by myself
+      https://biermanr.github.io/vimercise
+  --> A setup I like is to have two panes in tmux and have claude on one side
+  --> It's really nice that it "lives" on della and can see the full context of your problem
+      --> It will run bash commands like `ls` or `find` to get more of an idea of what's
+          going on and where important files are.
+      --> I don't understand or appreciate the security questions this raises...
+
+* Interactive example
+  --> Maybe lets ask claude for help with setting up an msprime simulation
+
+* Other experiences
+  --> I pay $20 a month and definitely run out of tokens if I'm using it heavily
+  --> I know some people who pay $100 a month and still run out
+      --> This person says that they don't type much anymore, they dictate instead
+  --> Other people are using claude on Della `top | grep claude`
+  --> Probably not a good idea to let claude add itself to your commit author list...
+  --> I find it hard to not talk to it as if it were a person lol
+  --> Very curious about other people's AI experiences
+  --> Claude will do websearches for you and look through tutorials to figure things out
+
+
