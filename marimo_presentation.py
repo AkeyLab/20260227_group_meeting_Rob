@@ -85,6 +85,41 @@ def _(mo):
 @app.cell
 def _(mo):
     mo.center(
+        mo.md("# Tmux"),
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.vstack([
+        mo.md("""
+        # tmux — persistent terminal sessions
+
+        **Presentor note:** switch to example/tmux folder on the terminal
+
+        Your SSH session dies if your connection drops. tmux keeps your work alive.
+
+        | Action | Shortcut |
+        |--------|----------|
+        | New session | `tmux new -s name` |
+        | Detach | `Ctrl+b` then `d` |
+        | Reattach | `tmux attach -t name` |
+        | Split horizontal | `Ctrl+b` then `"` |
+        | Split vertical | `Ctrl+b` then `%` |
+        | Switch panes | `Ctrl+b` then arrow keys |
+        | List sessions | `tmux ls` |
+        | Go into scroll mode | Ctrl+b then [ |
+
+        **Presenter note:** go to the terminal in examples/tmux
+        """),
+    ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.center(
         mo.vstack([
             mo.md("# Command line tools"),
             mo.md("(switch to terminal for interactive portion and cd into examples/tmux )"),
@@ -436,6 +471,7 @@ def _(mo):
 def _(mo):
     mo.vstack([
         mo.md("# Job and quota monitoring tools"),
+        mo.md("**Presentor Note:** Switch to terminal in examples/slurm_jobs and examples/quotas"),
         mo.accordion({
             "checkquota": mo.md("""
     Check your storage usage and quotas on `/home`, `/scratch`, and `/projects`:
@@ -476,94 +512,22 @@ def _(mo):
 
 
 @app.cell
-def _(mo, subprocess):
-    def get_tmux_sessions():
-        try:
-            result = subprocess.check_output(
-                ["tmux", "list-sessions"], text=True, stderr=subprocess.STDOUT
-            )
-            return result.strip()
-        except (OSError, subprocess.CalledProcessError):
-            sample = _sample_dir / "sample_tmux_sessions.txt"
-            if sample.exists():
-                return "*Sample data (not available in browser mode):*\n\n" + sample.read_text().strip()
-            return "No tmux sessions running (or not available in browser mode)"
+def _(mo):
+    mo.center(
+        mo.vstack([
+            mo.md("# Marimo: jupyter notebook alternative "),
+            mo.md("Marimo notebooks (view github: https://github.com/AkeyLab/20260227_group_meeting_Rob)")
+        ])
 
-    tmux_button = mo.ui.button(
-        label="List tmux sessions",
-        on_click=lambda value: get_tmux_sessions(),
     )
-    return (tmux_button,)
-
-
-@app.cell
-def _(mo, tmux_button):
-    mo.vstack([
-        mo.md("""
-        # tmux — persistent terminal sessions
-
-        **Presentor note:** Work through example/tmux
-
-        Your SSH session dies if your connection drops. tmux keeps your work alive.
-
-        | Action | Shortcut |
-        |--------|----------|
-        | New session | `tmux new -s name` |
-        | Detach | `Ctrl+b` then `d` |
-        | Reattach | `tmux attach -t name` |
-        | Split horizontal | `Ctrl+b` then `"` |
-        | Split vertical | `Ctrl+b` then `%` |
-        | Switch panes | `Ctrl+b` then arrow keys |
-        | List sessions | `tmux ls` |
-        """),
-        tmux_button,
-        mo.md(f"```\n{tmux_button.value}\n```") if isinstance(tmux_button.value, str) and tmux_button.value else mo.md(""),
-    ])
     return
 
 
 @app.cell
-def _(mo, subprocess):
-    def get_recent_history():
-        try:
-            result = subprocess.check_output(
-                ["bash", "-c", "HISTFILE=~/.bash_history; set -o history; history 20"],
-                text=True, stderr=subprocess.STDOUT
-            )
-            return result.strip() if result.strip() else "No history available"
-        except (OSError, subprocess.CalledProcessError):
-            return "Not available in browser mode"
-
-    history_button = mo.ui.button(
-        label="Show recent history",
-        on_click=lambda value: get_recent_history(),
+def _(mo):
+    mo.center(
+        mo.md("# uv to manage python and its packages"),
     )
-    return (history_button,)
-
-
-@app.cell
-def _(history_button, mo):
-    mo.vstack([
-        mo.md("""
-        # Ctrl+R — reverse history search
-
-        Stop retyping long commands. Press **Ctrl+R** and start typing to search
-        through your command history.
-
-        | Action | Key |
-        |--------|-----|
-        | Start search | `Ctrl+R` |
-        | Next match | `Ctrl+R` (again) |
-        | Accept & run | `Enter` |
-        | Accept & edit | `Right arrow` or `Esc` |
-        | Cancel | `Ctrl+C` |
-
-        **Pro tip:** The more you type, the more specific the match.
-        Try searching for `squeue` or `sbatch` — it finds your last invocation instantly.
-        """),
-        history_button,
-        mo.md(f"```\n{history_button.value}\n```") if isinstance(history_button.value, str) and history_button.value else mo.md(""),
-    ])
     return
 
 
@@ -609,8 +573,10 @@ def _(mo):
 
 
 @app.cell
-def _():
-    # Slide 11: Claude Code
+def _(mo):
+    mo.center(
+        mo.md("# Claude Code"),
+    )
     return
 
 
@@ -764,6 +730,44 @@ def _(mo):
             or request a **Copilot code review** from the reviewers dropdown.
             """),
             kind="info",
+        ),
+    ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.vstack([
+        mo.md("""
+        # GitHub Pages — free website hosting from a repo
+
+        [GitHub Pages](https://pages.github.com/) turns any repo into a website at
+        `https://<org>.github.io/<repo>/`.
+
+        **Two ways to deploy:**
+
+        | Method | How it works |
+        |--------|-------------|
+        | Branch-based | Point Pages at a branch (e.g. `gh-pages`) and GitHub serves its contents |
+        | GitHub Actions | A workflow builds your site and deploys via `actions/deploy-pages` |
+
+        **Setup:**
+        1. Go to **Settings > Pages** in your repo
+        2. Under **Source**, choose "GitHub Actions" (or pick a branch)
+        3. Push — your site is live in ~60 seconds
+
+        **Common uses:**
+        - Project documentation (Sphinx, MkDocs, Quarto)
+        - Lab websites and personal pages
+        - Sharing interactive notebooks (like this presentation!)
+        """),
+        mo.callout(
+            mo.md("""
+            **This presentation is hosted on GitHub Pages right now:**
+            [akeylab.github.io/20260227_group_meeting_Rob](https://akeylab.github.io/20260227_group_meeting_Rob/)
+            — built automatically on every push via GitHub Actions.
+            """),
+            kind="success",
         ),
     ])
     return

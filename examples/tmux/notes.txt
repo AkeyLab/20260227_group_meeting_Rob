@@ -1,5 +1,5 @@
 * tmux is very likely installed on any linux computer you'll
-  ever run into
+  ever run into. It's very much like `screen` if you've used that
 
 * Use `tmux ls` to list current sessions
 

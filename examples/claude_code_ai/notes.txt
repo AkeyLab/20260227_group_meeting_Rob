@@ -12,15 +12,23 @@
 
 * Interactive example
   --> Maybe lets ask claude for help with setting up an msprime simulation
+  --> "Hi, I'd like help setting up an msprime simulation of Neanderthals,
+      Modern Humans, and Denisovans. I'd like a single python script with
+      depedendencies managed by uv. Please ask me any questions you have."
 
 * Other experiences
   --> I pay $20 a month and definitely run out of tokens if I'm using it heavily
   --> I know some people who pay $100 a month and still run out
       --> This person says that they don't type much anymore, they dictate instead
-  --> Other people are using claude on Della `top | grep claude`
+  --> Other people are using claude on Della `top | grep claude` whether they should be or not
   --> Probably not a good idea to let claude add itself to your commit author list...
-  --> I find it hard to not talk to it as if it were a person lol
-  --> Very curious about other people's AI experiences
+  --> I find it hard to not talk to it as if it were a person
   --> Claude will do websearches for you and look through tutorials to figure things out
 
+* Final thoughts
+  --> Claude Code can be used within an IDE like VScode rather a terminal
+  --> OpenAI has "codex" which is very much like Claude Code
+  --> Using these tools is a new set of skills to learn. People are WAYY better
+      at it than I am currently.
+  --> Very curious about other people's AI experiences
 

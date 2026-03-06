@@ -20,6 +20,7 @@
 
 * Check the time/memory usage with `reportseff`
 
+* Run an interactive job `srun --account=akey --time=02:00:00 --mem=20G --pty bash -i`
 
 * Check the QOS (quality of service?) for the different queues with `qos | head -n 30`
   below is an example output.
